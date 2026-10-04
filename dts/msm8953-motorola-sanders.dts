@@ -291,7 +291,8 @@
 	qcom,current-limit-microamp = <25000>;
 	qcom,num-strings = <3>;
 	qcom,external-pfet;
-	qcom,cabc;
+	/* Sin qcom,cabc: con el panel Tianma NT35596 del sanders el PWM del panel
+	 * queda en 0 y el backlight no prende. Brillo solo por registro del PMIC. */
 
 	status = "okay";
 };
@@ -631,7 +632,10 @@
 	status = "okay";
 
 	panel: panel@0 {
-		compatible = "motorola,potter-panel", "tianma,tl052vdxp02";
+		/* lk2nd reemplaza este compatible segun el panel detectado:
+		 * motorola,sanders-nt35596-tianma o motorola,sanders-ili7807d-djn.
+		 * El driver del potter (tianma,tl052vdxp02) daba rayas grises. */
+		compatible = "motorola,sanders-panel";
 		reg = <0>;
 
 		backlight = <&pmi8950_wled>;
