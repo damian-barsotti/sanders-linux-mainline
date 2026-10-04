@@ -54,7 +54,7 @@ label arch-mainline
     linux /Image.gz
     initrd /initramfs.cpio.gz
     fdt /msm8953-motorola-sanders.dtb
-    append console=tty0 console=ttyGS0 console=ttyMSM0,115200n8 earlycon ignore_loglevel printk.time=1 printk.devkmsg=on panic=0 fbcon=font:TER16x32 wcn36xx.debug_mask=0x104
+    append console=tty0 console=ttyGS0 console=ttyMSM0,115200n8 earlycon printk.time=1 printk.devkmsg=on panic=0 fbcon=font:TER16x32 loglevel=3
 EOF
 
 # Symlinks na raiz para máxima compatibilidade com o parser do lk2nd
