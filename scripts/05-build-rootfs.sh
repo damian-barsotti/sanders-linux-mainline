@@ -377,7 +377,16 @@ for ov in common "$FLAVOR"; do
     OVERLAY="$REPO/rootfs-overlay/$ov"
     if [ -d "$OVERLAY" ]; then
         msg "aplicando overlay $ov ($OVERLAY)..."
-        cp -a "$OVERLAY"/. "$MNT"/
+        # --no-preserve=ownership: sin esto cp -a copia el uid del checkout
+        # (el usuario del host, uid 1000 = "alarm" en Arch ARM) y deja /,
+        # /etc, /usr y todo el overlay a nombre de alarm y escribibles por el.
+        cp -a --no-preserve=ownership "$OVERLAY"/. "$MNT"/
+        # Los modos vienen del umask del checkout (775/664): sacar escritura
+        # de grupo/otros en todo lo que toca el overlay (dirs incluidos).
+        (cd "$OVERLAY" && find . ! -type l) | while IFS= read -r p; do
+            chmod g-w,o-w "$MNT/$p"
+        done
+        [ -d "$OVERLAY/root" ] && chmod 700 "$MNT/root"
     fi
 done
 
