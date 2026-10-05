@@ -909,3 +909,15 @@
 
 
 
+
+/* Tension de VPH_PWR (rail principal, sigue a la bateria) por el VADC del
+ * PM8953, igual que en el DT de Android (chan@7 "vph_pwr", 1/3). El PMI8950
+ * no tiene canal de bateria util (VBAT_SNS lee 0) y no hay driver de fuel
+ * gauge en mainline, asi que es la forma de ver si la bateria carga. */
+&pm8953_vadc {
+	channel@7 {
+		reg = <VADC_VSYS>;
+		qcom,pre-scaling = <1 3>;
+		label = "vph_pwr";
+	};
+};
