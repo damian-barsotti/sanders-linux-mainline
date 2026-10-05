@@ -428,3 +428,12 @@ CONFIG_PSTORE_CONSOLE=y
 # CONFIG_ARCH_VISCONTI is not set
 # CONFIG_ARCH_XGENE is not set
 # CONFIG_ARCH_ZYNQMP is not set
+
+# Puertos serie USB dentro del kernel (el rootfs no trae modulos): CDC ACM
+# (microcontroladores, modems) y adaptadores CH340, FTDI, CP210x, PL2303.
+CONFIG_USB_ACM=y
+CONFIG_USB_SERIAL=y
+CONFIG_USB_SERIAL_CH341=y
+CONFIG_USB_SERIAL_FTDI_SIO=y
+CONFIG_USB_SERIAL_CP210X=y
+CONFIG_USB_SERIAL_PL2303=y
