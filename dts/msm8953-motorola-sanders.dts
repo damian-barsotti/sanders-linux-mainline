@@ -139,10 +139,17 @@
 	 */
 	battery: battery {
 		compatible = "simple-battery";
-		charge-full-design-microamp-hours = <3038000>;
+		/*
+		 * DT de Android del sanders: qcom,nom-batt-capacity-mah = 3000,
+		 * qcom,float-voltage-mv = 4400, qcom,fastchg-current-ma = 3000,
+		 * qcom,fg-iterm-ma = 150. Se usa 4.35 V (50 mV menos) y 1 A para
+		 * cuidar baterias viejas y el uso 24/7.
+		 */
+		charge-full-design-microamp-hours = <3000000>;
 		voltage-min-design-microvolt = <3400000>;
-		voltage-max-design-microvolt = <4400000>;
+		voltage-max-design-microvolt = <4350000>;
 		constant-charge-current-max-microamp = <1000000>;
+		charge-term-current-microamp = <150000>;
 	};
 };
 
@@ -624,25 +631,64 @@
 };
 
 /*
- * Charger + fuel-gauge integrados no PMI8996 (confirmados no DTB de
- * fabrica: smbchager@1000 / fuel-gauge@4000 dentro do pmic@2 do
- * PMI8950). Habilitados aqui, mas SEM efeito pratico ainda: nao
- * existe driver mainline pra "qcom,pmi8996-smbchg" nem
- * "qcom,pmi8996-fg" (verificado em drivers/power/supply/ e
- * Documentation/devicetree/bindings/power/supply/ — nenhum dos dois
- * compatible aparece). Os nos ficam prontos, documentados e corretos,
- * pro dia que alguem escrever/portar o driver — ate la sao inertes
- * (mesmo resultado pratico que /sys/class/power_supply/ vazio, hoje
- * confirmado ao vivo). Labels adicionados em
- * kernel/0004-pmi8950-battery-charger-nodes.patch (pmi8950.dtsi
- * upstream nao tem esses nos).
+ * Cargador (SMBCHG) y fuel gauge del PMI8950, con los drivers del fork
+ * msm8953-mainline (kernel/0009). Los nodos de pmi8950.dtsi (0003) son
+ * stubs sin interrupciones: aca se completan como en el pmi8950.dtsi del
+ * fork. El rol USB lo sigue manejando usb-connector (GPIO 59): en el
+ * sanders la deteccion de ID del PMIC esta deshabilitada en Android
+ * (qcom,usbid-disabled), y sin usb-role-switch enlazado el driver no
+ * toca el rol.
  */
 &pmi8950_smbcharger {
+	compatible = "qcom,pmi8950-smbchg";
+	interrupts = <0x2 0x10 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x2 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x3 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x4 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x5 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x6 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x10 0x7 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x11 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x11 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x11 0x3 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x2 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x3 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x4 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x5 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x6 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x12 0x7 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x13 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x13 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x13 0x2 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x13 0x5 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x14 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x14 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x0 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x1 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x2 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x3 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x4 IRQ_TYPE_EDGE_BOTH>,
+		     <0x2 0x16 0x5 IRQ_TYPE_EDGE_BOTH>;
+	interrupt-names = "chg-error", "chg-inhibit", "chg-prechg-sft",
+			  "chg-complete-chg-sft", "chg-p2f-thr", "chg-rechg-thr",
+			  "chg-taper-thr", "chg-tcc-thr", "otg-fail", "otg-oc",
+			  "usbid-change", "batt-hot", "batt-warm", "batt-cold",
+			  "batt-cool", "batt-ov", "batt-low", "batt-missing",
+			  "batt-term-missing", "usbin-uv", "usbin-ov",
+			  "usbin-src-det", "aicl-done", "dcin-uv", "dcin-ov",
+			  "power-ok", "temp-shutdown", "wdog-timeout",
+			  "flash-fail", "otst2", "otst3";
 	monitored-battery = <&battery>;
 	status = "okay";
 };
 
 &pmi8950_fg {
+	interrupts = <0x2 0x40 0x4 IRQ_TYPE_EDGE_RISING>,
+		     <0x2 0x44 0x0 IRQ_TYPE_EDGE_BOTH>;
+	interrupt-names = "soc-delta", "mem-avail";
 	monitored-battery = <&battery>;
 	power-supplies = <&pmi8950_smbcharger>;
 	status = "okay";

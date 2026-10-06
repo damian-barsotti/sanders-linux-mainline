@@ -440,3 +440,7 @@ CONFIG_USB_SERIAL_PL2303=y
 
 # ADC del PMIC (VADC) dentro del kernel: tension de entrada USB (usbin), etc.
 CONFIG_QCOM_SPMI_VADC=y
+
+# Cargador SMBCHG y fuel gauge del PMI8950 (drivers del fork msm8953-mainline, 0009)
+CONFIG_CHARGER_QCOM_SMBCHG=y
+CONFIG_BATTERY_PMI8994_FG=y
