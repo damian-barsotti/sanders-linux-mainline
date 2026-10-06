@@ -110,7 +110,7 @@ if command -v arch-chroot >/dev/null && [ -f /proc/sys/fs/binfmt_misc/qemu-aarch
     arch-chroot "$MNT" pacman -Syu --noconfirm --needed \
         iw wpa_supplicant dhcpcd wireless-regdb crda \
         samba terminus-font bluez bluez-utils \
-        alsa-utils alsa-ucm-conf \
+        alsa-utils alsa-ucm-conf usbutils \
         || die "pacman -S pacotes base falhou"
     arch-chroot "$MNT" systemctl enable bluetooth.service >/dev/null 2>&1 || true
 
