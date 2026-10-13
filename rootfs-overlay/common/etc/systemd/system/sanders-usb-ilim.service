@@ -1,0 +1,9 @@
+[Unit]
+Description=Limite de entrada de carga para cable OTG en Y (SDP en modo host)
+
+[Service]
+ExecStart=/usr/local/bin/sanders-usb-ilim.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

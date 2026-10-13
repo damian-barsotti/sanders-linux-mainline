@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinicia el controlador USB (xHCI) si muere
+
+[Service]
+ExecStart=/usr/local/bin/sanders-xhci-watchdog.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
