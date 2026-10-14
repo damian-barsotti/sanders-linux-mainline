@@ -168,14 +168,14 @@ attached the phone powers on again.
 ## Charging
 
 Charging works with `qcom-smbchg`. Status is in `/sys/class/power_supply/qcom-battery` and
-`/sys/class/power_supply/qcom-smbchg-usb`; `~/bin/bateria.sh` prints a summary.
+`/sys/class/power_supply/qcom-smbchg-usb`; `~/bin/battery.sh` prints a summary.
 
 - The battery is configured at 4.35 V float, 1 A charge current and 150 mA termination (the
   stock values are 4.40 V and 3 A), to be gentle with aged batteries left on a charger.
 - With a wall charger detected as DCP, AICL raises the input limit up to 3 A. Measured: about
   +1 A into the battery.
 - When a charger is seen as a data port (SDP), the driver keeps a 500 mA input limit. The display
-  alone draws about 320 mA; it blanks after 5 minutes, and `~/bin/pantalla.sh on|off` controls
+  alone draws about 320 mA; it blanks after 5 minutes, and `~/bin/display.sh on|off` controls
   it.
 - **Charging in host mode:** the phone does not supply VBUS to peripherals. To use USB
   peripherals and charge at the same time, use an **OTG Y cable with a power input**. The
@@ -196,13 +196,13 @@ Charging works with `qcom-smbchg`. Status is in `/sys/class/power_supply/qcom-ba
 
 ## Helper scripts
 
-Installed in `/root/bin` (on the `PATH`). Their names and output are in Spanish:
+Installed in `/root/bin` (on the `PATH`):
 
 | Script | Purpose |
 | :--- | :--- |
-| `bateria.sh` | Battery level, voltage, current, temperature, charger type and input limit. |
-| `energia.sh` | USB input voltage, VPH_PWR and USB role. |
-| `pantalla.sh on\|off\|estado` | Turn the display on or off, or show its state. |
+| `battery.sh` | Battery level, voltage, current, temperature, charger type and input limit. |
+| `power.sh` | USB input voltage, VPH_PWR and USB role. |
+| `display.sh on\|off\|status` | Turn the display on or off, or show its state. |
 | `test_usb_hub_otg.sh` | Loop over the USB role, `lsusb` and USB input voltage, to test OTG hubs. |
 
 ## License and credits

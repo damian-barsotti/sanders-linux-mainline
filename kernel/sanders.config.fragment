@@ -371,12 +371,12 @@ CONFIG_RMI4_F30=y
 # CONFIG_QCOM_FASTRPC=y
 # CONFIG_RPMSG_CHAR=y
 
-# Debug: pstore/ramoops built-in para leer el log con "fastboot oem ramoops console" desde lk2nd
+# Debug: pstore/ramoops built in, to read the log with "fastboot oem ramoops console" from lk2nd
 CONFIG_PSTORE_RAM=y
 CONFIG_PSTORE_CONSOLE=y
 
-# Achicar el kernel: sin plataformas no-Qualcomm. El Image de defconfig (56MB con BSS)
-# pisaba DTB/ramdisk en lk2nd (tags en DDR+52MB, extlinux max 50MB).
+# Shrink the kernel: no non-Qualcomm platforms. The defconfig Image (56MB with BSS)
+# overwrote the DTB/ramdisk loaded by lk2nd (tags at DDR+52MB, extlinux max 50MB).
 # CONFIG_ARCH_ACTIONS is not set
 # CONFIG_ARCH_AIROHA is not set
 # CONFIG_ARCH_SUNXI is not set
@@ -429,8 +429,8 @@ CONFIG_PSTORE_CONSOLE=y
 # CONFIG_ARCH_XGENE is not set
 # CONFIG_ARCH_ZYNQMP is not set
 
-# Puertos serie USB dentro del kernel (el rootfs no trae modulos): CDC ACM
-# (microcontroladores, modems) y adaptadores CH340, FTDI, CP210x, PL2303.
+# USB serial ports built in (the rootfs ships no modules): CDC ACM
+# (microcontrollers, modems) and CH340, FTDI, CP210x, PL2303 adapters.
 CONFIG_USB_ACM=y
 CONFIG_USB_SERIAL=y
 CONFIG_USB_SERIAL_CH341=y
@@ -438,9 +438,9 @@ CONFIG_USB_SERIAL_FTDI_SIO=y
 CONFIG_USB_SERIAL_CP210X=y
 CONFIG_USB_SERIAL_PL2303=y
 
-# ADC del PMIC (VADC) dentro del kernel: tension de entrada USB (usbin), etc.
+# PMIC ADC (VADC) built in: USB input voltage (usbin), etc.
 CONFIG_QCOM_SPMI_VADC=y
 
-# Cargador SMBCHG y fuel gauge del PMI8950 (drivers del fork msm8953-mainline, 0009)
+# PMI8950 SMBCHG charger and fuel gauge (drivers from the msm8953-mainline fork, 0009)
 CONFIG_CHARGER_QCOM_SMBCHG=y
 CONFIG_BATTERY_PMI8994_FG=y

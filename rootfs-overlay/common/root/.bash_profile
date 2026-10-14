@@ -1,2 +1,2 @@
-# Shells de login (SSH, consola, serial): cargar tambien ~/.bashrc
+# Login shells (SSH, console, serial): also load ~/.bashrc
 [ -f ~/.bashrc ] && . ~/.bashrc

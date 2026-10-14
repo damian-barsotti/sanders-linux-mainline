@@ -37,12 +37,12 @@ index 000000000..f80168468
 @@ -0,0 +1,243 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * Panel Tianma 5.5" 1080p (NT35596) del Motorola Moto G5S Plus (sanders).
-+ * En el aboot/lk2nd se llama qcom,mdss_dsi_mot_tianma_550_1080p_vid_v0.
++ * Tianma 5.5" 1080p (NT35596) panel of the Motorola Moto G5S Plus (sanders).
++ * aboot/lk2nd name it qcom,mdss_dsi_mot_tianma_550_1080p_vid_v0.
 + *
-+ * Generado con linux-mdss-dsi-panel-driver-generator a partir del device tree
-+ * de Android del sanders (hwrev 0x8400); se agregaron los reguladores vsp/vsn
-+ * (LAB/IBB) como en el driver del panel del potter.
++ * Generated with linux-mdss-dsi-panel-driver-generator from the stock Android
++ * device tree of the sanders (hwrev 0x8400); the vsp/vsn (LAB/IBB) regulators
++ * were added as in the potter panel driver.
 + */
 +
 +#include <linux/delay.h>
@@ -260,7 +260,7 @@ index 000000000..f80168468
 +}
 +
 +static const struct of_device_id sanders_tianma_of_match[] = {
-+	/* lk2nd reemplaza "motorola,sanders-panel" por este compatible */
++	/* lk2nd replaces "motorola,sanders-panel" with this compatible */
 +	{ .compatible = "motorola,sanders-nt35596-tianma" },
 +	{ /* sentinel */ }
 +};

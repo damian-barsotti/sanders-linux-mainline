@@ -1,16 +1,17 @@
 #!/bin/sh
-# Limite de corriente de entrada para cargar con un cable OTG en "Y".
+# Input current limit for charging through an OTG "Y" cable.
 #
-# Con el cable en Y (cargador + periferico en el mismo micro-USB) las lineas de
-# datos van al periferico, asi que la deteccion BC1.2 ve un puerto de datos
-# (SDP) y qcom-smbchg fija 500 mA sin correr AICL. Con el cable en Y el camino
-# de energia es bueno: a 1000 mA usbin queda firme en ~4.3-4.45 V y la bateria carga
-# a ~+650-900 mA (pantalla apagada).
-# Con un hub entre cargador y telefono NO conviene: el camino pierde tension y
-# con mas de 500 mA VBUS oscila (medido 2026-10-07).
+# With a Y cable (charger and peripheral on the same micro-USB port) the data
+# lines go to the peripheral, so BC1.2 detection sees a data port (SDP) and
+# qcom-smbchg sets 500 mA without running AICL. The power path of a Y cable is
+# good: at 1000 mA usbin stays at ~4.3-4.45 V and the battery charges at
+# ~+650-900 mA (display off).
+# Not suitable with a hub between the charger and the phone: the path drops
+# too much voltage and VBUS oscillates above 500 mA.
 #
-# Solo actua con SDP y rol USB host (adaptador/cable OTG). En modo device
-# (cable a una PC) no se toca: un puerto USB 2.0 de PC solo garantiza 500 mA.
+# Only acts with an SDP charger and the USB role in host mode (OTG adapter or
+# cable). Device mode (cable to a PC) is left alone: a USB 2.0 PC port only
+# guarantees 500 mA.
 ILIM=1000000
 U=/sys/class/power_supply/qcom-smbchg-usb
 
@@ -21,7 +22,7 @@ while true; do
        [ "$(cat /sys/class/usb_role/*/role 2>/dev/null)" = host ] &&
        [ "$(cat $U/input_current_limit)" != "$ILIM" ]; then
         echo "$ILIM" > $U/input_current_limit &&
-            echo "cargador SDP con USB en modo host: limite de entrada $((ILIM / 1000)) mA"
+            echo "SDP charger with USB in host mode: input limit $((ILIM / 1000)) mA"
     fi
     sleep 5
 done

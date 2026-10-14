@@ -1,11 +1,11 @@
 [Unit]
-Description=Apagar la pantalla (consola tty1) tras 5 minutos sin uso
+Description=Blank the display (tty1 console) after 5 minutes of inactivity
 After=getty@tty1.service
 
 [Service]
 Type=oneshot
-# Se escribe en tty1 por redireccion y no con StandardInput=tty: con eso
-# systemd espera a que tty1 quede libre, y lo tiene la sesion con autologin.
+# Write to tty1 by redirection instead of StandardInput=tty: with the latter
+# systemd waits for tty1 to be free, and the autologin session holds it.
 ExecStart=/bin/sh -c 'TERM=linux /usr/bin/setterm --blank 5 --powerdown 5 > /dev/tty1 < /dev/tty1'
 
 [Install]

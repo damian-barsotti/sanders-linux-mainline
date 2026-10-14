@@ -1,5 +1,5 @@
 [Unit]
-Description=Limite de entrada de carga para cable OTG en Y (SDP en modo host)
+Description=Charging input current limit for OTG Y cables (SDP in host mode)
 
 [Service]
 ExecStart=/usr/local/bin/sanders-usb-ilim.sh
