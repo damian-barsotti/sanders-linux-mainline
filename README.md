@@ -1,228 +1,216 @@
 # sanders-linux-mainline
 
-**Porte do Kernel Linux Mainline + Arch Linux ARM para a linha Motorola Moto G5 (Snapdragon 625 / MSM8953).**
+**Mainline Linux + Arch Linux ARM on a real Motorola Moto G5S Plus (`sanders`, Snapdragon 625 / MSM8953).**
 
-Alvos: **Moto G5s Plus (`sanders`)** e **Moto G5 Plus (`potter`)**.
+This is a fork of [rtyker/sanders-linux-mainline](https://github.com/rtyker/sanders-linux-mainline).
+The upstream port was validated on a Moto G5 Plus (`potter`), and its build does not boot on a
+`sanders`. This branch adds the fixes needed on real `sanders` hardware: kernel size, panel
+driver, battery charging, USB OTG and a usable console. It was tested on two phones, XT1804
+(64 GB) and XT1805 (32 GB), running the headless rootfs from the eMMC with no PC attached.
 
-Este é, até onde sabemos, o primeiro porte funcional do `sanders` e do `potter` para o kernel Linux mainline upstream com aceleração gráfica completa, stack de áudio Hexagon ADSP, Wi-Fi/Bluetooth integrados e boot 100% autônomo diretamente do eMMC via `lk2nd`.
+The original Portuguese README, which describes the upstream port and its `potter` results, is
+in [`docs/README.pt-BR.md`](docs/README.pt-BR.md).
 
-> ⚠️ **Unidade física de bancada usada nos testes ao vivo: Moto G5 Plus (`potter` XT1683 RETBR).**  
-> Confirmado via `fastboot getvar all` (`product: potter`, `board: potter`). As plataformas `sanders` e `potter` compartilham a quase totalidade da arquitetura (mesmo SoC Snapdragon 625, PMICs, painel DSI e periféricos, com pequenas variações de chip de touchscreen e câmera). Itens marcados como validados "ao vivo" foram confirmados no hardware `potter` de bancada.
->
-> 🚀 **Estado atual:** Sistema 100% autônomo e operacional. O aparelho liga diretamente na tomada/bateria e inicializa o Arch Linux ARM sem necessidade de PC ou comandos fastboot. Possui display nativo MIPI-DSI Full HD com aceleração 3D por hardware (GPU Adreno 506 via freedreno), áudio analógico funcional no alto-falante, botões físicos integrados, Wi-Fi WPA2, Bluetooth com A2DP Sink (aptX HD), console serial CDC ACM e rede SSH sobre USB e Wi-Fi.
+## Status on a real sanders
 
----
-
-| Especificação | Detalhe |
-| :--- | :--- |
-| **Dispositivos** | Motorola Moto G5s Plus (`sanders`) / Moto G5 Plus (`potter`) |
-| **SoC** | Qualcomm Snapdragon 625 (MSM8953) — 8x ARM Cortex-A53 @ 2.0 GHz |
-| **GPU** | Adreno 506 (aceleração OpenGL/EGL via driver `freedreno`) |
-| **RAM / Armazenamento** | 2 GB / 3 GB / 4 GB LPDDR3 — 32 GB eMMC 5.1 (`mmcblk0`) |
-| **Bootloader** | [lk2nd](https://github.com/msm8916-mainline/lk2nd) (2º estágio gravado permanentemente em `mmcblk0p37`/`p38`) |
-| **Kernel** | Linux Mainline upstream (v6.x / v7.x) + patches de integração |
-| **Distribuição** | Arch Linux ARM (`aarch64`) |
-| **Acesso padrão** | Serial USB CDC ACM (`/dev/ttyACM0`), SSH via USB (`10.42.0.2`) e Wi-Fi (`wlan0`) |
-
----
-
-## 📱 Demonstração
-
-![Foto da tela mostrando archlinuxarm login:](docs/screenshots/login.jpg)
-
-*(Systemd em execução nativa com console no painel MIPI-DSI e shell serial/SSH ativos).*
-
----
-
-## ⚡ Status dos Componentes de Hardware
-
-| Componente | Status | Detalhes Técnicos |
+| Component | Status | Notes |
 | :--- | :---: | :--- |
-| **Boot Autônomo (eMMC)** | ✅ | ABOOT → `lk2nd` (`boot` `mmcblk0p37`) → extlinux (`cache` `mmcblk0p52`, ext2) → Linux Mainline → Rootfs (`userdata` `mmcblk0p54`, ext4). Inicializa sem intervenção de PC. |
-| **Display Nativo MIPI-DSI** | ✅ | Painéis Tianma TL052VDXP02 / BOE BS052FHM-A00-6C01 operacionais via driver DRM MSM nativo (MDSS/MDP5/DSI). Resolução 1080x1920 portrait. Backlight WLED controlável via sysfs. |
-| **Aceleração 3D / GPU** | ✅ | Adreno 506 com driver upstream `freedreno` ativo (`/dev/dri/card1` e `renderD128`). Suporte a OpenGL, EGL e Wayland (Weston `--renderer=gl`). |
-| **Touchscreen** | ✅ | Synaptics S3603R em `0x20` no Potter (driver `rmi4_i2c` com patch de fallback F12) e FocalTech FT5436 em `0x38` no Sanders (`edt-ft5x06`). Multi-touch Full HD ativo. |
-| **Wi-Fi (WCN3680B)** | ✅ | Driver `wcn36xx` via `qcom-wcnss-pil`. WPA2/PSK 100% funcional com patch de fallback NOVHT (`0002-wcn36xx-wcn3680-novht-fallback.patch`). DHCP e internet nativos. |
-| **Bluetooth (WCN3680B)** | ✅ | BlueZ 5.87 via `btqcomsmd`. Endereço MAC original de fábrica restaurado via `/persist/bluetooth/.bt_nv.bin`. Pareamento BLE e receptor de áudio A2DP Sink com codec aptX HD via PipeWire. |
-| **Áudio e Alto-falante** | ✅ | Qualcomm Hexagon ADSP QDSP6 + codec analógico SPMI PM8953 (WCD). Saída de som no alto-falante frontal (`plughw:0,0`). Mobile MP3 Player GTK4 com skins retrô integrado. |
-| **Botões Físicos** | ✅ | Volume Up (`gpio-keys`), Volume Down (`pm8941_resin`) e Power (`pm8941_pwrkey`). Daemon dedicado ajusta ganho ALSA e PipeWire com feedback visual em tela. |
-| **USB Gadget** | ✅ | Controlador DWC3 operando em modo periférico: console serial CDC ACM (`/dev/ttyACM0`) + rede CDC ECM (`usb0` @ 10.42.0.2). |
-| **Gerenciamento de Energia** | ✅ | Watchdog de hardware MSM (`/dev/watchdog0`) supervisionado pelo systemd (auto-reboot em 30s se congelar); zRAM swap dinâmico (50% da RAM). |
-| **Containers (Docker / Podman)** | ✅ | Docker Engine e Podman totalmente suportados com storage driver `overlay2` e compatibilidade `iptables-nft` via `CONFIG_NFT_COMPAT=y`. |
-| **Sensor Proximidade / Luz** | ⚠️ | LiteON LTR559 funcional no bus I2C 1 (`ltr501`). Proximidade responde a obstruções; calibração ALS (luz ambiente) em andamento. |
-| **Acelerômetro / Giroscópio** | 🔴 | Roteados internamente ao Hexagon ADSP. Diagnóstico QRTR confirmou que a porta SMGR reportada é artefato; requer canal FastRPC para ativação futura. |
-| **LED Frontal** | ❌ | Inexistente/não-povoado no hardware de bancada XT1683 (investigação detalhada concluída). |
+| Standalone boot from eMMC | ✅ | lk2nd in `boot` → extlinux in `cache` (ext2) → kernel → Arch Linux ARM in `userdata`. TWRP can stay in `recovery`. |
+| Display | ✅ | Tianma 5.5" NT35596 panel (`mot_tianma_550_1080p_vid_v0`) with a dedicated driver. Text console with a 20x40 font. |
+| Wi-Fi (WCN3680B) | ✅ | Client mode, WPA2. SSH over Wi-Fi. |
+| USB gadget | ✅ | Serial console (`/dev/ttyACM0` on the PC) and USB network (phone at `10.42.0.2`). |
+| Bluetooth | ✅ | Tested with a Bluetooth keyboard. |
+| USB OTG host | ✅ | Role selected automatically by the micro-USB ID pin. USB serial drivers (CDC ACM, CH340, FTDI, CP210x, PL2303) are built in. |
+| Battery charging | ✅ | PMI8950 charger and fuel gauge drivers (see [Charging](#charging)). |
+| PMIC ADC | ✅ | USB input voltage and VPH_PWR in `/sys/bus/iio`. |
+| Not tested on sanders | — | GPU acceleration, audio, touchscreen, camera, sensors, desktop flavors. |
 
-Para relatórios detalhados, consulte [`docs/HARDWARE_STATUS.md`](docs/HARDWARE_STATUS.md).
+The DJN panel variant (ILI7807D) found in some `sanders` units has no driver yet.
 
----
+## Fixes over upstream
 
-## 🛠️ Como Reproduzir (Build do Zero)
+- **Kernel size:** lk2nd on MSM8953 loads the DTB at DDR+52 MB, and its extlinux path caps the
+  kernel at 50 MB. The arm64 defconfig produced a 56 MB image that overwrote the DTB, and the
+  phone reset about 11 s after boot with no log. Every non-Qualcomm `CONFIG_ARCH_*` is disabled,
+  which brings the image to about 41 MB. After changing the kernel config, check that
+  `image_size` (offset 16 in the arm64 Image header) stays under 50 MB.
+- **Panel:** the `sanders` uses a Tianma NT35596 panel, not the `potter` one. `kernel/0008` adds a
+  driver generated from the stock device tree. The DTS uses
+  `compatible = "motorola,sanders-panel"`, which lk2nd replaces with the detected panel.
+  `qcom,cabc` is removed from the WLED node; with CABC enabled the screen stays black.
+- **Battery charging:** mainline has no PMI8950 charger driver, so the battery never charges.
+  `kernel/0009` adds the `qcom-smbchg` charger and `pmi8994_fg` fuel gauge drivers from
+  [msm8953-mainline/linux](https://github.com/msm8953-mainline/linux) (branch `7.1.3/main`).
+- **USB OTG:** `dr_mode = "otg"` plus a `gpio-usb-b-connector` on the ID pin (GPIO 59).
+- **PMIC VADC:** built into the kernel, with the PM8953 VPH_PWR channel added.
+- **Rootfs overlay:** `05-build-rootfs.sh` copied the overlay with `cp -a`, which left `/`,
+  `/etc` and `/usr` owned by the `alarm` user. The overlay is now copied as root.
+- **Console:** 20x40 font, `us-acentos` keymap (US international with dead keys), quiet boot,
+  and automatic blanking after 5 minutes.
 
-### Pré-requisitos
-- Sistema host Linux x86_64 (preferencialmente Arch Linux ou derivado).
-- Pacotes base: `cross-aarch64-linux-gnu-gcc`, `arm-none-eabi-gcc`, `android-tools`, `dtc`, `git`, `make`, `ccache`.
-- Aparelho com bootloader **desbloqueado** (`fastboot oem unlock`).
+## Building (Ubuntu 22.04)
 
-### Passo a Passo de Compilação
-
-Execute os scripts numerados em ordem a partir da raiz do repositório:
+`scripts/00-setup-host.sh` targets Arch Linux. On Ubuntu 22.04, install:
 
 ```bash
-git clone https://github.com/rtyker/sanders-linux-mainline.git
-cd sanders-linux-mainline
+sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi gcc-aarch64-linux-gnu flex bison \
+    ccache libelf-dev device-tree-compiler mkbootimg libarchive-tools arch-install-scripts \
+    qemu-user-static
+```
 
-# 1. Instala dependências do host
-./scripts/00-setup-host.sh
+`python3-libfdt` does not exist on Ubuntu 22.04. If a tool needs `pylibfdt`, install it in a
+Python virtualenv with pip.
 
-# 2. Compila o bootloader de segundo estágio lk2nd
+### Proprietary firmware
+
+The firmware blobs are not in the repository (`firmware/` is gitignored). Each user extracts them
+from their own phone and places them in `firmware/` before building the initramfs and rootfs:
+
+| File(s) | Source |
+| :--- | :--- |
+| `wcnss.*`, `adsp.*` | `image/` directory of the `modem` partition (a FAT image) |
+| `qcom/msm8953/motorola/sanders/a506_zap.*` | `modem` partition (`a506_zap.*`) |
+| `a530/a530_pfp.fw`, `a530/a530_pm4.fw` | [linux-firmware](https://gitlab.com/kernel-firmware/linux-firmware) (`qcom/`) |
+| `wlan/prima/WCNSS_qcom_wlan_nv.bin` | Stock Android `system` partition, `/system/etc/firmware/wlan/prima/` |
+
+`scripts/09-extract-firmware.sh` can do this from a stock flashfile zip.
+
+### Build steps
+
+Run from the repository root:
+
+```bash
 ./scripts/01-build-lk2nd.sh
-
-# 3. Clona o kernel Linux mainline, aplica patches e compila (Image.gz + DTBs)
 ./scripts/02-build-kernel.sh
-
-# 4. Compila o BusyBox estático para o initramfs
 ./scripts/03-build-busybox.sh
-
-# 5. Gera a imagem initramfs (cpio.gz) com suporte a UDC e montagem de rootfs
 ./scripts/04-build-initramfs.sh
-
-# 6. Constrói o sistema de arquivos Arch Linux ARM base (requer sudo)
-sudo ./scripts/05-build-rootfs.sh
-
-# 7. Prepara as imagens de boot (Android boot.img e staging extlinux ext2)
+sudo FLAVOR=headless ./scripts/05-build-rootfs.sh
 ./scripts/06-build-boot.sh
 ```
 
----
+The outputs are `build/out/lk2nd.img`, `build/out/boot-cache.img` (kernel, DTB, initramfs and
+`extlinux.conf` in a 256 MB ext2 image), `build/out/boot-sanders.img` (for a temporary
+`fastboot boot`) and `build/rootfs-arch-headless.img`.
 
-## 💾 Provisionamento e Deploy
+## Installing
 
-### 1. Gravação Inicial no Aparelho (Flash Permanente)
-Com o aparelho no modo **Fastboot**:
+> ⚠️ This erases Android: `userdata` is overwritten with the Linux rootfs. Back up anything you
+> need first.
 
-```bash
-# ⚠️ ATENÇÃO: Formata o eMMC e grava o lk2nd e o Arch Linux ARM
-sudo ./scripts/99-flash-rootfs-final.sh
-```
+What we used and tested: an unlocked bootloader with TWRP in `recovery`.
 
-O script grava o `lk2nd.img` nas partições `boot` e `recovery`, formata a partição `cache` (`mmcblk0p52`, ext2) como partição de boot extlinux e instala o rootfs ext4 na partição `userdata` (`mmcblk0p54`).
+1. **Back up the partitions** from TWRP, at least `boot`, `recovery`, `modem`, `modemst1`,
+   `modemst2`, `fsg`, `fsc` and `persist`. For example:
 
-A partir deste momento, o aparelho **inicializa sozinho de forma autônoma** ao receber energia.
+   ```bash
+   for p in boot recovery modem modemst1 modemst2 fsg fsc persist; do
+       adb exec-out "dd if=/dev/block/bootdevice/by-name/$p" > backup/$p.img
+   done
+   ```
 
-### 2. Deploy Contínuo de Atualizações de Kernel/DTB
-Após o provisionamento inicial, **não é necessário usar fastboot nem apagar o eMMC** para testar novos kernels:
+2. **Install lk2nd in `boot`** from TWRP:
 
-```bash
-# Com o aparelho conectado via USB e rede ativa:
-./scripts/10-deploy-boot.sh --reboot
-```
+   ```bash
+   adb push build/out/lk2nd.img /tmp/
+   adb shell dd if=/tmp/lk2nd.img of=/dev/block/bootdevice/by-name/boot
+   adb reboot
+   ```
 
-O script transfere `Image.gz` e os arquivos `.dtb` via SCP, monta a partição ext2 de boot (`cache`), cria backup de segurança da versão anterior, atualiza os arquivos e reinicia o dispositivo.
+   `scripts/99-flash-rootfs-final.sh` also writes lk2nd to `recovery`. If you want to keep TWRP,
+   flash the partitions by hand instead.
 
----
+3. **Enter lk2nd fastboot:** hold **Volume Down** while the phone powers on. Then flash the boot
+   partition and the rootfs:
 
-## 🔌 Acesso e Comunicação
+   ```bash
+   fastboot flash cache build/out/boot-cache.img
+   fastboot flash userdata build/rootfs-arch-headless.img
+   fastboot reboot
+   ```
 
-### Console Serial CDC ACM
-O aparelho disponibiliza um console serial USB em `/dev/ttyACM0`:
+From then on the phone boots Linux by itself. To get back to TWRP, power on with
+**Volume Down + Power** to reach the Motorola bootloader, then select Recovery.
 
-```bash
-./scripts/conecta_serial.sh --ensure   # Garante restauração da porta e reconexão
-picocom -b 115200 /dev/ttyACM0         # Login automático como root
-```
+To power off from the lk2nd menu, choose "Shutdown" with the USB cable unplugged; with a cable
+attached the phone powers on again.
 
-### Rede USB e Conexão SSH
-O initramfs e o systemd configuram a interface de rede USB gadget `usb0`:
+## First boot
 
-```bash
-# No computador host, configure o NAT e o IP do gateway:
-sudo ./scripts/08-host-net.sh
+- The display shows a root console with autologin.
+- **Wi-Fi:** `sanders-network-setup.sh wifi <SSID> -` prompts for the password without leaving it
+  in the shell history or the process list.
+- **SSH:** only key authentication is allowed. Add your public key with `sanders-ssh-setup.sh`,
+  from the display console or the USB serial console (`picocom -b 115200 /dev/ttyACM0` on the
+  PC).
+- **USB network:** the phone is `10.42.0.2`. Give the PC `10.42.0.1/24` on the USB network
+  interface, for example with a NetworkManager connection in "shared" mode, or with
+  `scripts/08-host-net.sh`.
+- **Change the default passwords** of Arch Linux ARM (`root`/`root`, `alarm`/`alarm`). The
+  display and serial consoles log in as root without a password.
+- To install packages, run a full `pacman -Syu` first: the package database in the image is old
+  and package downloads fail with 404.
 
-# Conecte-se via SSH:
-ssh root@10.42.0.2    # Senha padrão: root
-```
+## Updating the kernel
 
----
+- **Permanent:** copy `Image.gz` and the DTB to the `cache` partition from the running system and
+  reboot:
 
-## 🎨 Flavors do Sistema (Pós-Deploy)
+  ```bash
+  mount /dev/disk/by-label/boot /mnt     # files are under /mnt/boot/
+  ```
 
-O sistema conta com o utilitário `sanders-flavor-install.sh` para transformar o ambiente de acordo com a finalidade desejada:
+  Keep the previous files (for example as `.prev`) so you can restore them from TWRP. You can
+  also reflash the whole partition from lk2nd fastboot with
+  `fastboot flash cache build/out/boot-cache.img`.
+- **Temporary test:** hold **Volume Down** at power on to reach lk2nd fastboot, then
+  `fastboot boot build/out/boot-sanders.img`.
 
-```bash
-sanders-flavor-install.sh list              # Exibe os perfis disponíveis
-sanders-flavor-install.sh <flavor>          # Instala e habilita o perfil
-sanders-flavor-install.sh <flavor> --remove # Desabilita os serviços do perfil
-```
+## Charging
 
-| Flavor | Descrição | Ambiente |
-| :--- | :--- | :--- |
-| **`server`** | Servidor headless enxuto (htop, git, curl, bluez, ferramentas de rede). | Linha de comando (SSH/Serial) |
-| **`server-docker`** | Servidor headless + Docker Engine e docker-compose pré-configurados. | Containers / Microserviços |
-| **`weston-minimal`** | Compositor Wayland (Weston) acelerado por hardware via GPU freedreno + VNC. | Wayland / EGL puro |
-| **`xfce`** | Ambiente desktop clássico completo XFCE4 exibido no painel DSI nativo e via x11vnc. | Interface Gráfica Completa |
-| **`xorg`** | Servidor X11 minimalista com xterm (modo leve para aplicações dedicadas). | X11 simples |
+Charging works with `qcom-smbchg`. Status is in `/sys/class/power_supply/qcom-battery` and
+`/sys/class/power_supply/qcom-smbchg-usb`; `~/bin/bateria.sh` prints a summary.
 
-Além dos flavors tradicionais, está disponível o **Sanders Mobile Launcher** (`sanders-launcher.service`), uma interface móvel touch nativa em GTK4 estilo Android executada sob o Weston.
+- The battery is configured at 4.35 V float, 1 A charge current and 150 mA termination (the
+  stock values are 4.40 V and 3 A), to be gentle with aged batteries left on a charger.
+- With a wall charger detected as DCP, AICL raises the input limit up to 3 A. Measured: about
+  +1 A into the battery.
+- When a charger is seen as a data port (SDP), the driver keeps a 500 mA input limit. The display
+  alone draws about 320 mA; it blanks after 5 minutes, and `~/bin/pantalla.sh on|off` controls
+  it.
+- **Charging in host mode:** the phone does not supply VBUS to peripherals. To use USB
+  peripherals and charge at the same time, use an **OTG Y cable with a power input**. The
+  `sanders-usb-ilim` service raises the input limit to 1 A in that case (SDP charger with the USB
+  role in host mode). Measured with the display off: +650 to +900 mA into the battery.
+- **Powered hubs are not a good charging path:** the voltage drop over the hub, cable and adapter
+  makes VBUS oscillate above 500 mA, and charging falls to almost nothing.
+- Fuel gauge quirks: `status` can say "Charging" while discharging (trust the sign of
+  `current_now`), and `current_now` sometimes reads exactly 0 (ignore those samples).
 
-Mais detalhes em [`docs/FLAVORS.md`](docs/FLAVORS.md).
+## Known issues
 
----
+- No VBUS output in host mode: the OTG boost regulator (`otg-vbus` in `qcom-smbchg`) is not wired
+  in the DT yet. Bus-powered peripherals need a powered hub or a Y cable.
+- Unplugging a peripheral in host mode can kill the xHCI controller ("HC died"). The
+  `sanders-xhci-watchdog` service detects it and restarts the controller.
+- The upstream audio, GPU and desktop flavor work has not been verified on a `sanders`.
 
-## 📂 Estrutura do Repositório
+## Helper scripts
 
-```text
-sanders-linux-mainline/
-├── docs/                           # Documentação técnica aprofundada
-│   ├── HARDWARE_STATUS.md          # Matriz de suporte de componentes
-│   ├── FLAVORS.md                  # Perfis de instalação pós-deploy
-│   ├── STEP_BY_STEP.md             # Guia detalhado de compilação
-│   ├── TROUBLESHOOTING.md          # Registro de diagnósticos e soluções
-│   ├── LK2ND_SETUP.md              # Documentação técnica do bootloader
-│   └── archived/                   # Planos e especificações concluídos
-├── dts/
-│   └── msm8953-motorola-sanders.dts # Device Tree Source customizado
-├── kernel/
-│   ├── sanders.config.fragment     # Opções essenciais do kernel mainline
-│   └── *.patch                     # Patches de hardware (Wi-Fi NOVHT, painel DSI, touch, etc.)
-├── initramfs/                      # Scripts e configurações do initramfs
-├── rootfs-overlay/                 # Configurações de sistema, daemons e serviços do Arch Linux
-│   ├── common/                     # Scripts de rede, bluetooth, volume, áudio e flavors
-│   └── desktop/                    # Configurações específicas de Wayland/Weston
-├── tools/                          # Utilitários auxiliares (launcher, scan BLE, extração QCDT)
-└── scripts/                        # Scripts de automação numerados
-    ├── 00-setup-host.sh            # Instalação das ferramentas no host
-    ├── 01-build-lk2nd.sh           # Compilação do lk2nd
-    ├── 02-build-kernel.sh          # Compilação do kernel com ccache
-    ├── 03-build-busybox.sh         # Compilação do BusyBox
-    ├── 04-build-initramfs.sh       # Empacotamento do initramfs
-    ├── 05-build-rootfs.sh          # Construção da imagem base do rootfs
-    ├── 06-build-boot.sh            # Geração das imagens de boot
-    ├── 07-boot-kernel.sh           # Inicialização temporária via fastboot (recuperação)
-    ├── 08-host-net.sh              # Configuração de NAT e rede no host
-    ├── 09-extract-firmware.sh      # Extração de firmwares do stock
-    ├── 10-deploy-boot.sh           # Deploy incremental de kernel via SSH
-    ├── 99-flash-rootfs-final.sh    # Gravação permanente inicial no eMMC
-    ├── conecta_serial.sh           # Conexão e recuperação da porta serial/rede
-    └── lib.sh                      # Variáveis e rotinas compartilhadas
-```
+Installed in `/root/bin` (on the `PATH`). Their names and output are in Spanish:
 
----
+| Script | Purpose |
+| :--- | :--- |
+| `bateria.sh` | Battery level, voltage, current, temperature, charger type and input limit. |
+| `energia.sh` | USB input voltage, VPH_PWR and USB role. |
+| `pantalla.sh on\|off\|estado` | Turn the display on or off, or show its state. |
+| `test_usb_hub_otg.sh` | Loop over the USB role, `lsusb` and USB input voltage, to test OTG hubs. |
 
-## 🤝 Contribuições
+## License and credits
 
-Contribuições e testes em hardware físico adicional são bem-vindos. Frentes ativas de melhoria incluem:
-1. **Validação em `sanders` físico:** Testes de confirmação de periféricos específicos (câmera, sensores) no Moto G5s Plus real.
-2. **Subssistema de Sensores:** Implementação de canal FastRPC para viabilizar acelerômetro e giroscópio através do Hexagon ADSP.
-3. **Calibração do sensor de luminosidade (ALS):** Ajustes no registrador do chip LiteON LTR559.
-
-Consulte [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) para diretrizes de desenvolvimento.
-
----
-
-## 📄 Licença e Créditos
-
-- **Kernel Linux:** GPL-2.0.
-- **lk2nd:** Projeto open-source mantido pela comunidade [msm8916-mainline/lk2nd](https://github.com/msm8916-mainline/lk2nd) e fork por [@playday3008](https://github.com/playday3008).
-- **DTS Base:** Baseado no trabalho de Sireesh Kodali (`msm8953-motorola-potter.dts`, BSD-3-Clause) e adaptado para a plataforma Motorola MSM8953 mainline.
-- Scripts, ferramentas e documentações deste repositório: GPL-2.0.
+- Upstream port: [rtyker/sanders-linux-mainline](https://github.com/rtyker/sanders-linux-mainline).
+- Charger and fuel gauge drivers: [msm8953-mainline/linux](https://github.com/msm8953-mainline/linux).
+- Panel driver generated with
+  [linux-mdss-dsi-panel-driver-generator](https://github.com/msm8916-mainline/linux-mdss-dsi-panel-driver-generator).
+- Bootloader: [lk2nd](https://github.com/msm8916-mainline/lk2nd).
+- Linux kernel and the scripts, tools and documentation in this repository: GPL-2.0.
+- Base DTS: Sireesh Kodali's `msm8953-motorola-potter.dts` (BSD-3-Clause).
