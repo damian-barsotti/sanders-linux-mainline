@@ -205,6 +205,15 @@ Installed in `/root/bin` (on the `PATH`):
 | `display.sh on\|off\|status` | Turn the display on or off, or show its state. |
 | `test_usb_hub_otg.sh` | Loop over the USB role, `lsusb` and USB input voltage, to test OTG hubs. |
 
+## Related projects
+
+[postmarketOS](https://postmarketos.org) (now [Nura](https://nura.eco)) is the main
+mainline Linux distribution for phones. It has a generic `qcom-msm8953` port that uses the
+same lk2nd bootloader and [msm8953-mainline](https://github.com/msm8953-mainline/linux)
+kernel, but at the time of writing that kernel has no `sanders` device tree, so it does not
+support this phone yet. This repository builds Arch Linux ARM instead. The `sanders`
+device tree and panel driver here could be a starting point for adding the phone there.
+
 ## License and credits
 
 - Upstream port: [rtyker/sanders-linux-mainline](https://github.com/rtyker/sanders-linux-mainline).
