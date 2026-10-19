@@ -220,6 +220,8 @@ device tree and panel driver here could be a starting point for adding the phone
 - Charger and fuel gauge drivers: [msm8953-mainline/linux](https://github.com/msm8953-mainline/linux).
 - Panel driver generated with
   [linux-mdss-dsi-panel-driver-generator](https://github.com/msm8916-mainline/linux-mdss-dsi-panel-driver-generator).
-- Bootloader: [lk2nd](https://github.com/msm8916-mainline/lk2nd).
+- Bootloader: [lk2nd](https://github.com/msm8916-mainline/lk2nd), built from the
+  [playday3008 fork](https://github.com/playday3008/lk2nd) (commit `c8b47cd`, set in
+  `scripts/lib.sh`).
 - Linux kernel and the scripts, tools and documentation in this repository: GPL-2.0.
 - Base DTS: Sireesh Kodali's `msm8953-motorola-potter.dts` (BSD-3-Clause).
